@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load static %}
 {% block title %}
 <title>Записи сообщества {{ group.title }}</title>
 {% endblock %}
@@ -10,19 +9,7 @@
     <p>{{ group.description|linebreaks }}</p>
     <br>
     {% for post in page_obj %}
-    <article>
-      <ul>
-        <li>
-          Автор: {{ post.author.get_full_name }}
-        </li>
-        <li>
-          Дата публикации: {{ post.pub_date|date:"d E Y" }}
-        </li>
-      </ul>      
-      <p>
-        {{ post.text|linebreaks }}
-      </p>         
-    </article>
+    {% include 'posts/includes/article.html' %}
     {% if not forloop.last %}<hr>{% endif %}
     {% endfor %}
   </div>
