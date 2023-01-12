@@ -7,11 +7,12 @@ class PostForm(forms.ModelForm):
         model = Post
         fields = ["text", "group"]
 
+
     def clean_text(self):
-        data = self.cleaned_data["text"]
-        if data == '':
+        text = self.cleaned_data["text"]
+        if text == '':
             raise forms.VatidationError(
                 'Поле должно быть заполнено'
             )
-        return data
+        return text
     
