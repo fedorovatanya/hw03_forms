@@ -32,6 +32,9 @@
     <p>
         {{ post.text|linebreaks }}
     </p>
+    <a class="btn btn-primary" href="{% url 'posts:post_edit' post.pk %}">
+        редактировать запись
+    </a>
     </article>
     </div> 
 </main>
