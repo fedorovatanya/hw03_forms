@@ -63,11 +63,14 @@ def post_create(request):
         post.save()
         return redirect('posts:profile', post.author)
     groups = Group.objects.all()
-    template = "posts/create_post.html"
-    context = {"form": form, "groups": groups}
-    return render(request, template, context)
+    return render(
+        request,
+        "posts/create_post.html",
+        {'form': form, "groups": groups}
+    )
 
 
+@login_required
 def post_edit(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     groups = Group.objects.all()
