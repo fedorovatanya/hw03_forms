@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}
 {% if is_edit %}
-Редактировать пост
+<title>Редактировать пост</title>
 {% else %}
-Новый пост
+<title>Новый пост</title>
 {% endif %}
 {{ group.title }}
 {% endblock %}
@@ -21,7 +21,11 @@
             {% endif %}
           </div>
           <div class="card-body">
-            <form method="post" href="{% url 'posts:post_create' %}">
+              {% if is_edit %}
+                <form method="post" enctype="multipart/form-data" action="{% url 'posts:post_edit' post.pk %}">
+              {% else %}
+                <form method="post" enctype="multipart/form-data" action="{% url 'posts:post_create' %}">
+              {% endif %}
               {% csrf_token %}
               <div class="form-group row my-3 p-3">
                 <label for="id_text">
