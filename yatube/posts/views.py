@@ -62,24 +62,21 @@ def post_create(request):
         post.author = request.user
         post.save()
         return redirect('posts:profile', post.author)
-    groups = Group.objects.all()
     return render(
         request,
         "posts/create_post.html",
-        {'form': form, "groups": groups}
+        {'form': form}
     )
 
 
 @login_required
 def post_edit(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
-    groups = Group.objects.all()
     form = PostForm(request.POST or None, instance=post)
     context = {
         "form": form,
         "is_edit": True,
         "post": post,
-        "groups": groups,
     }
     if post.author != request.user:
         return redirect("posts:post_detail", post_id)
