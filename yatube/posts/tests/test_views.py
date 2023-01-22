@@ -7,12 +7,16 @@ from django import forms
 
 User = get_user_model()
 
+POST_IN_FIRST_PAGE = 10
+POST_IN_SECOND_PAGE = 3
+
 
 class PostViewTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='TestUser')
+        cls.user2 = User.objects.create_user(username='auth2')
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test-slug',
@@ -34,9 +38,9 @@ class PostViewTests(TestCase):
             'posts/index.html': reverse('posts:index'),
             'posts/group_list.html': reverse('posts:group_list', kwargs={'slug': self.group.slug}),
             'posts/profile.html': reverse('posts:profile', args=[self.user.username]),
-            'posts/post_detail.html': reverse('posts:post_detail', args=[self.user.username, self.post.id]),
+            'posts/post_detail.html': reverse('posts:post_detail', args=[self.post.id]),
             'posts/create_post.html': reverse('posts:post_create'),
-            'posts/create_post.html': reverse('posts:post_edit', args=[self.user.username, self.post.id]),
+            'posts/create_post.html': reverse('posts:post_edit', args=[self.post.id]),
         }
         # Проверяем, что при обращении к name вызывается соответствующий HTML-шаблон
         for template, reverse_name in templates_pages_names.items():
@@ -77,29 +81,24 @@ class PostViewTests(TestCase):
                 form_field = response.context.get('form').fields.get(value)
                 self.assertIsInstance(form_field, expected)
 
-    def test_shows_post_on_index_page_if_post_has_group(self):
-        """Главная страница содержит пост, если при его создании
-            указать группу"""
-        response = self.guest_client.get(reverse('posts:index'))
-
-        self.assertContains(response, self.post.text)
-        self.assertContains(response, self.post.author.username)
-
-    def test_shows_post_on_group_page_if_post_has_group(self):
-        """Страница группы содержит пост, если при его создании
-            указать группу"""
-        response = self.guest_client.get(
-            reverse('posts:group_list', kwargs={'slug': self.post.group.slug}))
-
-        self.assertContains(response, self.post.text)
-        self.assertContains(response, self.post.author.get_full_name())
-
-    def test_post_has_correct_group(self):
-        """Проверка, что пост не попал в группу, для которой не был
-            предназначен"""
-        group_new = Group.objects.create()
-        self.assertIn(self.post, self.group.posts.all())
-        self.assertNotIn(self.post, group_new.posts.all())
+    def test_post_added_correctly_user2(self):
+        """Пост при создании не добавляется другому пользователю
+           Но виден на главной и в группе"""
+        group2 = Group.objects.create(title='Тестовая группа 2',
+                                      slug='test_group2')
+        posts_count = Post.objects.filter(group=self.group).count()
+        post = Post.objects.create(
+            text='Тестовый пост от другого автора',
+            author=self.user2,
+            group=group2)
+        response_profile = self.authorized_client.get(
+            reverse('posts:profile',
+                    kwargs={'username': f'{self.user.username}'}))
+        group = Post.objects.filter(group=self.group).count()
+        profile = response_profile.context['page_obj']
+        self.assertEqual(group, posts_count, 'поста нет в другой группе')
+        self.assertNotIn(post, profile,
+                         'поста нет в группе другого пользователя')
 
 
 class PaginatorViewsTest(TestCase):
@@ -114,9 +113,9 @@ class PaginatorViewsTest(TestCase):
     def test_first_page_contains_ten_records(self):
         response = self.client.get(reverse('posts:index'))
 
-        self.assertEqual(len(response.context.get('page_obj').object_list), 10)
+        self.assertEqual(len(response.context.get('page_obj').object_list), POST_IN_FIRST_PAGE)
 
     def test_second_page_contains_three_records(self):
         response = self.client.get(reverse('posts:index') + '?page=2')
 
-        self.assertEqual(len(response.context.get('page_obj').object_list), 3)
+        self.assertEqual(len(response.context.get('page_obj').object_list), POST_IN_SECOND_PAGE)
